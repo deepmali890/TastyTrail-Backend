@@ -23,6 +23,17 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ["user", "owner", "deliverBoy"],
         required: true
+    },
+    resetOtp: {
+        type: Number,
+        default: null
+    },
+    isOtpVerified: {
+        type: Boolean,
+        default: false
+    },
+    otpExpires:{
+        type:Date
     }
 
 }, { timestamps: true })

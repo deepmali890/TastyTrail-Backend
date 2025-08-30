@@ -275,3 +275,223 @@ exports.logout = async (req, res) => {
     });
   }
 };
+
+
+
+exports.sendOtp = async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ message: 'Email is required' });
+  }
+  try {
+
+
+
+    const user = await User.findOne({ email })
+    if (!user) {
+      return res.status(401).json({
+        message: 'User not found.',
+        success: false
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpires = Date.now() + 300000;
+
+    user.resetOtp = otp
+    user.otpExpires = otpExpires
+    user.isOtpVerified = false
+
+    await user.save()
+
+    // Inside your sendOtp controller after saving user
+    const htmlContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Your OTP Code</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', sans-serif;
+      background: #f5f7fa;
+      color: #333;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: 40px auto;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      overflow: hidden;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #4facfe, #00f2fe);
+      color: #fff;
+      padding: 30px 20px;
+      text-align: center;
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+
+    .header img {
+      width: 70px;
+      margin-bottom: 10px;
+    }
+
+    .content {
+      padding: 35px 30px;
+      text-align: center;
+    }
+
+    .content h2 {
+      font-size: 24px;
+      margin-bottom: 15px;
+      color: #4facfe;
+    }
+
+    .otp-box {
+      display: inline-block;
+      background: #f0f9ff;
+      border: 2px dashed #4facfe;
+      padding: 18px 40px;
+      border-radius: 12px;
+      font-size: 32px;
+      font-weight: 700;
+      letter-spacing: 6px;
+      color: #333;
+      margin: 20px 0;
+    }
+
+    .content p {
+      font-size: 16px;
+      line-height: 1.6;
+      margin: 20px 0;
+      color: #555;
+    }
+
+    .footer {
+      background: #f9f9f9;
+      text-align: center;
+      font-size: 13px;
+      color: #888;
+      padding: 15px;
+      border-top: 1px solid #eee;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px);}
+      to { opacity: 1; transform: translateY(0);}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <img src="https://cdn-icons-png.flaticon.com/512/2950/2950710.png" alt="OTP Icon"/>
+      OTP Verification
+    </div>
+    <div class="content">
+      <h2>Hello ${user.fullName || "User"} 👋</h2>
+      <p>We received a request to verify your account. Use the OTP below to proceed:</p>
+      <div class="otp-box">${otp}</div>
+      <p>This OTP is valid for <b>5 minutes</b>. Please do not share it with anyone for your security.</p>
+    </div>
+    <div class="footer">
+      &copy; ${new Date().getFullYear()} Tasty Trail. All rights reserved.<br>
+      If this wasn’t you, you can safely ignore this email.
+    </div>
+  </div>
+</body>
+</html>
+`;
+
+    // Send OTP email
+    await sendMail(email, "Your OTP Code", htmlContent);
+
+
+
+
+
+    res.status(200).json({ message: 'OTP sent to your email.' });
+
+
+  } catch (error) {
+    console.error('Error finding user:', error);
+    return res.status(500).json({ message: 'Internal server error' });
+  }
+
+}
+
+exports.verifyOtp = async (req, res) => {
+  const { email, resetOtp } = req.body;
+  if (!email || !resetOtp) {
+    return res.status(400).json({ message: 'Email and Reset OTP are required' });
+  }
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user || !user.resetOtp || !user.otpExpires) {
+      return res.status(400).json({ message: "OTP not requested or invalid user." });
+    }
+
+    const isOtpExpired = user.otpExpires < Date.now();
+    if (isOtpExpired) {
+      return res.status(400).json({ message: "OTP expired. Please request a new one." });
+    }
+
+    if (user.resetOtp !== resetOtp) {
+      return res.status(400).json({ message: "Invalid OTP. Please try again." });
+    }
+
+    // otp is valid
+    user.isOtpVerified = true
+    user.resetOtp = undefined;
+    user.otpExpires = undefined;
+    await user.save();
+
+
+    res.status(200).json({ message: "OTP verified successfully." });
+  } catch (error) {
+    console.error("OTP verification error:", error);
+    res.status(500).json({ message: "Server error during OTP verification." });
+  }
+}
+
+exports.resetPassword = async (req, res) => {
+  const { email, newPassword } = req.body;
+  if (!email || !newPassword) {
+    return res.status(400).json({ message: 'Email and new password are required' });
+  }
+
+  try {
+
+    const user = await User.findOne({ email });
+    if (!user || !user.isOtpVerified) {
+      return res.status(400).json({ message: 'Otp verification required' });
+    }
+
+    const salt = await bcrypt.genSalt(12);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    user.password = hashedPassword;
+    user.isOtpVerified = false
+    user.resetOtp = undefined;
+    user.otpExpires = undefined
+    await user.save();
+
+    res.status(200).json({ message: 'Password reset successful' });
+
+  } catch (error) {
+    console.error("Reset password error:", error);
+    res.status(500).json({ message: "Server error during password reset." });
+  }
+
+}
