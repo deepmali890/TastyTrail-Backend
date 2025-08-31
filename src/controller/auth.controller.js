@@ -528,13 +528,13 @@ exports.resetPassword = async (req, res) => {
 // This controller handles login/signup using Google OAuth details and generates a token.
 exports.googleAuth = async (req, res) => {
   try {
-    const { fullName, email, mobile } = req.body;
+    const { fullName, email, mobile, role } = req.body;
 
     let user = await User.findOne({ email })
 
     if (!user) {
       user = await User.create({
-        fullName, email, mobile
+        fullName, email, mobile, role
       })
     }
 
