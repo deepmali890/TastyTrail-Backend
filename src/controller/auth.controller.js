@@ -4,6 +4,11 @@ const sendMail = require("../utils/sendMail");
 const generateToken = require("../utils/generateToken");
 
 
+
+
+// Controller: User Registration
+// This controller handles new user registration with validation, password hashing, token creation, 
+// and sending a welcome email.
 exports.register = async (req, res) => {
 
   const { fullName, email, password, role, mobile } = req.body;
@@ -15,7 +20,7 @@ exports.register = async (req, res) => {
 
   //  Password length check
   if (password.length < 6) {
-    return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+    return res.status(400).json({ message: 'Password must be at least 6 characters long.' });
   }
 
 
@@ -198,6 +203,10 @@ exports.register = async (req, res) => {
 }
 
 
+
+// Controller: User Login
+// This controller handles user login by validating credentials, generating a token, 
+// and sending a success response with cookie.
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -223,7 +232,7 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(401).json({
-        message: 'Invalid credentials',
+        message: 'Invalid password.',
         success: false
       });
     }
@@ -241,7 +250,7 @@ exports.login = async (req, res) => {
 
     // Send success response
     res.status(200).json({
-      message: 'Login successful!',
+      message: 'Login successful.',
       token,
       success: true,
 
@@ -258,6 +267,10 @@ exports.login = async (req, res) => {
 
 }
 
+
+``
+// Controller: User Logout
+// This controller clears the authentication token and logs the user out.
 exports.logout = async (req, res) => {
   try {
     // Clear the cookie
@@ -278,6 +291,10 @@ exports.logout = async (req, res) => {
 
 
 
+
+// Controller: Send OTP
+// This controller generates a one-time password (OTP), saves it to the user record, 
+// and sends it to the user’s email for verification.
 exports.sendOtp = async (req, res) => {
   const { email } = req.body;
   if (!email) {
@@ -295,7 +312,7 @@ exports.sendOtp = async (req, res) => {
       });
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = Math.floor(100000 + Math.random() * 900000);
     const otpExpires = Date.now() + 300000;
 
     user.resetOtp = otp
@@ -421,20 +438,24 @@ exports.sendOtp = async (req, res) => {
 
 
 
-    res.status(200).json({ message: 'OTP sent to your email.' });
+    res.status(200).json({ message: 'OTP has been sent to your email.' });
 
 
   } catch (error) {
-    console.error('Error finding user:', error);
-    return res.status(500).json({ message: 'Internal server error' });
+    console.error('Error sending OTP:', error);
+    return res.status(500).json({ message: 'Internal server error while sending OTP.' });
   }
 
 }
 
+
+
+// Controller: Verify OTP
+// This controller verifies if the OTP entered by the user is correct and not expired.
 exports.verifyOtp = async (req, res) => {
   const { email, resetOtp } = req.body;
   if (!email || !resetOtp) {
-    return res.status(400).json({ message: 'Email and Reset OTP are required' });
+    return res.status(400).json({ message: 'Email and OTP are required.' });
   }
   try {
     const user = await User.findOne({ email });
@@ -448,7 +469,7 @@ exports.verifyOtp = async (req, res) => {
       return res.status(400).json({ message: "OTP expired. Please request a new one." });
     }
 
-    if (user.resetOtp !== resetOtp) {
+    if (user.resetOtp !== Number(resetOtp)) {
       return res.status(400).json({ message: "Invalid OTP. Please try again." });
     }
 
@@ -466,6 +487,11 @@ exports.verifyOtp = async (req, res) => {
   }
 }
 
+
+
+
+// Controller: Reset Password
+// This controller resets the user’s password after successful OTP verification.
 exports.resetPassword = async (req, res) => {
   const { email, newPassword } = req.body;
   if (!email || !newPassword) {
@@ -476,7 +502,7 @@ exports.resetPassword = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user || !user.isOtpVerified) {
-      return res.status(400).json({ message: 'Otp verification required' });
+      return res.status(400).json({ message: 'Otp verification required.' });
     }
 
     const salt = await bcrypt.genSalt(12);
@@ -487,11 +513,55 @@ exports.resetPassword = async (req, res) => {
     user.otpExpires = undefined
     await user.save();
 
-    res.status(200).json({ message: 'Password reset successful' });
+    res.status(200).json({ message: 'Password has been reset successfully.' });
 
   } catch (error) {
     console.error("Reset password error:", error);
     res.status(500).json({ message: "Server error during password reset." });
   }
 
+}
+
+
+
+// Controller: Google Authentication
+// This controller handles login/signup using Google OAuth details and generates a token.
+exports.googleAuth = async (req, res) => {
+  try {
+    const { fullName, email, mobile } = req.body;
+
+    let user = await User.findOne({ email })
+
+    if (!user) {
+      user = await User.create({
+        fullName, email, mobile
+      })
+    }
+
+    const token = await generateToken(user._id)
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      sameSite: "strict",
+      secure: false,
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    })
+
+
+
+    // Send success response
+    res.status(200).json({
+      message: 'Login successful!',
+      token,
+      success: true,
+
+    });
+
+  } catch (error) {
+    console.error('Google Auth error:', error);
+    res.status(500).json({
+      message: 'Server error during Google authentication.',
+      success: false
+    });
+  }
 }
