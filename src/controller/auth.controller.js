@@ -551,9 +551,10 @@ exports.googleAuth = async (req, res) => {
 
     // Send success response
     res.status(200).json({
-      message: 'Login successful!',
+      message: 'Signup successful!',
       token,
       success: true,
+      user
 
     });
 
