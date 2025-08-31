@@ -532,33 +532,39 @@ exports.googleAuth = async (req, res) => {
   try {
     const { fullName, email, mobile, role } = req.body;
 
-    let user = await User.findOne({ email })
+    let user = await User.findOne({ email });
 
-    if (!user) {
+    if (user) {
+      // agar user hai but password bhi set hai => iska matlab normal signup hua tha
+      if (user.password) {
+        return res.status(400).json({
+          message: "Email already registered with password. Please login instead.",
+          success: false
+        });
+      }
+      // agar user hai but password nahi hai => google ke through pehle signup hua tha
+      // to bas login kara do
+    } else {
+      // agar user nahi hai to naya google user banao
       user = await User.create({
         fullName, email, mobile, role
-      })
+      });
     }
 
-    const token = await generateToken(user._id)
+    const token = await generateToken(user._id);
 
     res.cookie("token", token, {
       httpOnly: true,
       sameSite: "none",
       secure: true,
       maxAge: 7 * 24 * 60 * 60 * 1000
-    })
+    });
 
-
-
-
-    // Send success response
     res.status(200).json({
-      message: 'Signup successful!',
+      message: 'Google Auth successful!',
       token,
       success: true,
       user
-
     });
 
   } catch (error) {
