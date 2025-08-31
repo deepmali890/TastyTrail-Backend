@@ -10,7 +10,7 @@ const router = express.Router();
 // @route   get/current-user
 // @desc   Get Current user
 
-router.get('/current-user', protect, userController.getCurrentUser)
+router.get('/current-user', protect, userController.getCurrentUser);
 
 
 
