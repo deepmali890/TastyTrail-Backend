@@ -35,6 +35,10 @@ router.post('/reset-password', authController.resetPassword);
 // @desc    Login or register user via Google authentication
 router.post('/google-auth', authController.googleAuth);
 
+// @route   POST /logout
+// @desc    Logout user
+router.post('/logout', authController.logout);
+
 
 
 
