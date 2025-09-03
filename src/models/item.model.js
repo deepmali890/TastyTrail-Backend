@@ -23,7 +23,7 @@ const itemSchema = new mongoose.Schema({
         enum: ["Mild", "Medium", "Hot"],
         default: "Medium",
     },
-    image: {
+    itemImage: {
         type: String,
         required: true
     },

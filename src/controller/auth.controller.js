@@ -62,16 +62,6 @@ exports.register = async (req, res) => {
       mobile: mobileStr
     });
 
-    const token = await generateToken(newUser._id)
-
-    res.cookie("token", token, {
-      httpOnly: true,
-      sameSite: "none",
-      secure: true,
-      maxAge: 7 * 24 * 60 * 60 * 1000
-    })
-
-
     await newUser.save();
 
     // create email content
@@ -194,7 +184,7 @@ exports.register = async (req, res) => {
     // Send welcome email
     await sendMail(email, "Welcome to Tasty Trail!", htmlContent);
 
-    res.status(201).json({ message: 'User registered successfully', user: newUser, success: true, token });
+    res.status(201).json({ message: 'User registered successfully', user: newUser, success: true });
 
 
   } catch (error) {

@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const authRoutes = require('./src/routes/auth.routes')
 const userRoutes = require('./src/routes/user.routes')
 const shopRoutes = require('./src/routes/shop.routes')
+const itemsRoutes = require('./src/routes/item.routes')
 
 
 
@@ -29,6 +30,7 @@ app.use(cookieParser());
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/shop', shopRoutes);
+app.use('/api/items', itemsRoutes);
 
 
 

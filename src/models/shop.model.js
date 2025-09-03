@@ -42,7 +42,7 @@ const shopSchema = new mongoose.Schema({
     },
     items: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Item"
+        ref: "item"
     }]
 }, { timestamps: true })
 

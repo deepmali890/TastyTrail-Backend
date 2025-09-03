@@ -61,7 +61,7 @@ exports.editShop = async (req, res) => {
             return res.status(404).json({ message: "Shop not found" });
         }
 
-        if (shopImage) {
+        if (shopImage) {    
             if (shopImage) {
                 if (shop.shopImage) {
                     const publicId = shop.shopImage.split("/").pop().split(".")[0];
