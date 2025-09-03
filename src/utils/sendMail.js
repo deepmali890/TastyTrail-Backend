@@ -17,7 +17,6 @@ const sendMail = async (to, subject, htmlContent) => {
             html: htmlContent
         });
 
-        console.log(`Welcome mail sent to ${to}`);
     } catch (err) {
         console.error("Mail Error: ", err);
     }

@@ -51,25 +51,30 @@ exports.createShop = async (req, res) => {
 
 exports.getShop = async (req, res) => {
     try {
-        const shop = await Shop.findOne({ owner: req.user._id }).populate("owner items")
+        const shop = await Shop.findOne({ owner: req.user._id })
+            .populate("owner item"); 
+
         if (!shop) {
-            return null
+            return res.status(404).json({
+                message: "Shop not found for this owner",
+                success: false,
+            });
         }
 
         return res.status(200).json({
             message: "Shop fetched successfully",
             shop,
+            success: true,
         });
-
     } catch (error) {
         console.error("Error fetching shop:", error);
         return res.status(500).json({
             message: "Something went wrong while fetching shop",
             error: error.message,
+            success: false,
         });
     }
-
-}
+};
 
 exports.editShop = async (req, res) => {
 
