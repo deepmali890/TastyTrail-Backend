@@ -49,6 +49,28 @@ exports.createShop = async (req, res) => {
     }
 }
 
+exports.getShop = async (req, res) => {
+    try {
+        const shop = await Shop.findOne({ owner: req.user._id }).populate("owner items")
+        if (!shop) {
+            return null
+        }
+
+        return res.status(200).json({
+            message: "Shop fetched successfully",
+            shop,
+        });
+
+    } catch (error) {
+        console.error("Error fetching shop:", error);
+        return res.status(500).json({
+            message: "Something went wrong while fetching shop",
+            error: error.message,
+        });
+    }
+
+}
+
 exports.editShop = async (req, res) => {
 
     try {
@@ -61,7 +83,7 @@ exports.editShop = async (req, res) => {
             return res.status(404).json({ message: "Shop not found" });
         }
 
-        if (shopImage) {    
+        if (shopImage) {
             if (shopImage) {
                 if (shop.shopImage) {
                     const publicId = shop.shopImage.split("/").pop().split(".")[0];

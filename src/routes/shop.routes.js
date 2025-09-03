@@ -8,6 +8,7 @@ const router = express.Router();
 
 
 router.post('/createShop', protect, fileHandle, shopController.createShop)
+router.get('/getShop', protect, shopController.getShop)
 router.post('/editShop/:shopId', protect, fileHandle, shopController.editShop);
 
 module.exports = router
