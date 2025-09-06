@@ -51,8 +51,7 @@ exports.createShop = async (req, res) => {
 
 exports.getShop = async (req, res) => {
     try {
-        const shop = await Shop.findOne({ owner: req.user._id })
-            .populate("owner item"); 
+    const shop = await Shop.findOne({ owner: req.user._id }).populate("owner items");
 
         if (!shop) {
             return res.status(404).json({
